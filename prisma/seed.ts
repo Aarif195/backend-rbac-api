@@ -1,19 +1,19 @@
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
 async function main() {
   const permissions = [
-    ['documents', 'create'],
-    ['documents', 'read'],
-    ['documents', 'update'],
-    ['documents', 'delete'],
-    ['conversations', 'create'],
-    ['conversations', 'read'],
-    ['users', 'read'],
-    ['users', 'manage'],
-    ['roles', 'manage'],
+    ["documents", "create"],
+    ["documents", "read"],
+    ["documents", "update"],
+    ["documents", "delete"],
+    ["conversations", "create"],
+    ["conversations", "read"],
+    ["users", "read"],
+    ["users", "manage"],
+    ["roles", "manage"],
   ];
 
   for (const [resource, action] of permissions) {
@@ -33,45 +33,48 @@ async function main() {
   const allPermissions = await prisma.permission.findMany();
 
   const adminRole = await prisma.role.upsert({
-    where: { name: 'admin' },
+    where: { name: "admin" },
     update: {},
     create: {
-      name: 'admin',
-      description: 'Full system access',
+      name: "admin",
+      description: "Full system access",
     },
   });
 
   const memberRole = await prisma.role.upsert({
-    where: { name: 'member' },
+    where: { name: "member" },
     update: {},
     create: {
-      name: 'member',
-      description: 'Standard member access',
+      name: "member",
+      description: "Standard member access",
       isDefault: true,
     },
   });
 
   const viewerRole = await prisma.role.upsert({
-    where: { name: 'viewer' },
+    where: { name: "viewer" },
     update: {},
     create: {
-      name: 'viewer',
-      description: 'Read-only access',
+      name: "viewer",
+      description: "Read-only access",
     },
   });
 
+  await prisma.rolePermission.deleteMany({
+  where: {
+    roleId: memberRole.id,
+  },
+});
+
   const memberPermissions = [
-    'documents:create',
-    'documents:read',
-    'documents:update',
-    'documents:delete',
-    'conversations:read',
+    "documents:create",
+    "documents:read",
+    "documents:update",
+    "conversations:create",
+    "conversations:read",
   ];
 
-  const viewerPermissions = [
-    'documents:read',
-    'conversations:read',
-  ];
+  const viewerPermissions = ["documents:read", "conversations:read"];
 
   for (const permission of allPermissions) {
     await prisma.rolePermission.upsert({
@@ -133,22 +136,22 @@ async function main() {
     }
   }
 
-  const password = await bcrypt.hash('Password123!', 10);
+  const password = await bcrypt.hash("Password123!", 10);
 
   const adminUser = await prisma.user.upsert({
-    where: { email: 'admin@example.com' },
+    where: { email: "admin@example.com" },
     update: {},
     create: {
-      email: 'admin@example.com',
+      email: "admin@example.com",
       password,
     },
   });
 
   const testUser = await prisma.user.upsert({
-    where: { email: 'member@example.com' },
+    where: { email: "member@example.com" },
     update: {},
     create: {
-      email: 'member@example.com',
+      email: "member@example.com",
       password,
     },
   });
